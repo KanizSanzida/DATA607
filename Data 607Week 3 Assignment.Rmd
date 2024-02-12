@@ -1,0 +1,89 @@
+---
+title: "Data 607 Week 3 Assignment"
+author: "Sanzida Kaniz"
+output: html_document
+date: "2024-02-11"
+---
+
+
+```{r}
+library(openintro)
+library(tidyverse)
+```
+
+### 1. Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+
+
+```{r}
+
+Allages = read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/all-ages.csv", stringsAsFactors = F)
+
+str (Allages)
+```
+
+Every major that includes the words "DATA" or "STATISTICS" must be searched for.
+
+```{r}
+str_subset(Allages$Major, "DATA|STATISTICS", negate = F)
+```
+
+### 2 Write code that transforms the data below:
+
+[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+[13] "olive"        "salal berry"
+
+Into a format like this:
+c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+
+```{r}
+Fruits <- c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+x<- paste('c(', paste('"',Fruits,'"',sep = "", collapse = ','), sep = "",')')
+writeLines(x)
+
+```
+
+### 3 Describe, in words, what these expressions will match:
+
+(.)\1\1
+"(.)(.)\\2\\1"
+(..)\1
+"(.).\\1.\\1"
+"(.)(.)(.).*\\3\\2\\1"
+
+
+"(.)\1\1"
+It will search for the first letter at the beginning and check to see if it appears twice more after that.
+
+"(.)(.)\2\1"
+I'll examine whether anything matches the opposite by examining the first two starting letters.
+
+"(..)\1"
+It will look at the first two letters to check for repetitions.
+
+"(.).\1.\1"
+The initial letter—which does not begin on a new line—will be examined first, followed by a character, the first character once more, a character after that, and finally the first character once more.
+
+
+### 4 Construct regular expressions to match words that:
+
+Start and end with the same character.
+Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+
+
+```{r}
+str_subset(c("civic", "level", "mom", "nose", "eye"), "^(.)((.*\\1$)|\\1?$)")
+```
+
+
+```{r}
+str_subset(c("foot", "good", "house", "letter", "data", "church"), "([A-Za-z][A-Za-z]).*\\1")
+```
+
+```{r}
+str_subset("eleven",  "([a-z]).*\\1.*\\1")
+```
+
