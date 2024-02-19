@@ -1,0 +1,131 @@
+---
+title: "Data 607 Project 1"
+author: "Sanzida Kaniz"
+output: html_document
+date: "2024-02-18"
+---
+
+```{r}
+library(openintro)
+library(tidyverse)
+library(stringr)
+library(readr)
+```
+
+###Project 1 
+In this project, you’re given a text file with chess tournament results where the information has some structure.  Your job is to create an R Markdown file that generates a .CSV file (that could for example be imported into a SQL database) with the following information for all of the players: Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents For the first player, the information would be: Gary Hua, ON, 6.0, 1794, 1605 1605 was calculated by using the pre-tournament opponents’ ratings of 1436, 1563, 1600, 1610, 1649, 1663, 1716, and dividing by the total number of games played. If you have questions about the meaning of the data or the results, please post them on the discussion forum.  Data science, like chess, is a game of back and forth… The chess rating system (invented by a Minnesota statistician named Arpad Elo) has been used in many other contexts, including assessing relative strength of employment candidates by human resource departments.  You may substitute another text file (or set of text files, or data scraped from web pages) of similar or greater complexity, and create your own assignment and solution.  You may work in a small team.  All of your code should be in an R markdown file (and published to rpubs.com); with your data accessible for the person running the script. 
+
+
+```{r}
+tournamentinfo <- 'https://raw.githubusercontent.com/KanizSanzida/DATA607/main/tournamentinfo.txt'
+
+dfTournament <- read_csv(file = tournamentinfo,col_names = FALSE)
+```
+
+
+```{r}
+head(tournamentinfo)
+```
+```{r}
+tail(tournamentinfo)
+```
+
+
+```{r} 
+summary(tournamentinfo) 
+```
+
+ using sep = "|" to create a new column after every "|" and name them according to their content creates a great first step towards a data frame.
+```{r load_raw_data, include=TRUE, warning = FALSE}
+ 
+
+rawtbl <- read.csv("https://raw.githubusercontent.com/KanizSanzida/DATA607/main/tournamentinfo.txt", sep = "|", stringsAsFactors=FALSE, 
+col.names = c("RankNState", "PlayerName", "TotalPts", "Round1", "Round2", "Round3",
+"Round4", "Round5", "Round6", "Round7", "emptycol"))
+```
+
+We clean up the raw data by: (1) eliminating the final, empty column; and (2) removing any rows that indicate each player's separation from the others, which are displayed in the text file as a row of repeated dashes. (3) We eliminate the headers from rows 1 and 2 of the original text file (.txt).
+
+```{r format_raw_data, include=TRUE, warning = FALSE}
+rawtbldropempty <- rawtbl[,-11]
+rawtblnolines <- rawtbldropempty[!grepl("----", rawtbldropempty$RankNState),]
+rawF<- rawtblnolines[-c(1:2),]
+rawF[1:2,]
+```
+We create a new data frame to house all data from the initial data frame in a clean format adding two new columns for splitting out the State and Rating
+```{r create_clean_data, include=TRUE, warning = FALSE}
+dimen <- dim(rawF)
+cleantbl <- data.frame(matrix(nrow = dimen[1]/2, ncol = dimen[2]+2))
+names(cleantbl) <- c("Rank","Player","TotalPoints","Round1", "Round2", "Round3",
+"Round4", "Round5", "Round6", "Round7","State","Rating")
+```
+Since each player has information spread across two rows as of right now, as we've seen above, we consolidate all of that information into a single row.
+```{r move_players_into_row, include=TRUE, warning = FALSE}
+
+len <- nrow(cleantbl)
+j=1
+for(i in 1:len){
+  k=i*2
+  cleantbl[i,1:10] <- rawF[j,]
+  cleantbl[i,11:12] <- rawF[k,1:2]
+  j=2*i+1
+}
+
+cleantbl[1,]
+```
+Since the starting rating and the rank of each opponent are not in their own column, as can be seen, we make additional columns that only include the player's starting rating and the rank of each opponent.
+
+```{r Rating_Round_clean_up, include=TRUE, warning = FALSE}
+cleantbl$RatingStart <- gsub('^.*R:\\s*|\\s*-.*$', '', cleantbl$Rating)
+cleantbl$RatingStart<-  gsub("P.*", "\\1", cleantbl$RatingStart)
+cleantbl$R1 <- gsub('\\D+','', cleantbl$Round1)
+cleantbl$R2 <- gsub('\\D+','', cleantbl$Round2)
+cleantbl$R3 <- gsub('\\D+','', cleantbl$Round3)
+cleantbl$R4 <- gsub('\\D+','', cleantbl$Round4)
+cleantbl$R5 <- gsub('\\D+','', cleantbl$Round5)
+cleantbl$R6 <- gsub('\\D+','', cleantbl$Round6)
+cleantbl$R7 <- gsub('\\D+','', cleantbl$Round7)
+cleantbl[1,]
+```
+
+The starting rating (ELO) of each component for each player is the final piece of information we add to the new columns, and we then compute the average of these new columns.
+```{r Rating_add_Opp_Start_Rating, include=TRUE, warning = FALSE}
+cleantbl$OppR1 <- as.numeric(cleantbl$RatingStart[as.numeric(cleantbl$R1)])
+cleantbl$OppR2 <- as.numeric(cleantbl$RatingStart[as.numeric(cleantbl$R2)])
+cleantbl$OppR3 <- as.numeric(cleantbl$RatingStart[as.numeric(cleantbl$R3)])
+cleantbl$OppR4 <- as.numeric(cleantbl$RatingStart[as.numeric(cleantbl$R4)])
+cleantbl$OppR5 <- as.numeric(cleantbl$RatingStart[as.numeric(cleantbl$R5)])
+cleantbl$OppR6 <- as.numeric(cleantbl$RatingStart[as.numeric(cleantbl$R6)])
+cleantbl$OppR7 <- as.numeric(cleantbl$RatingStart[as.numeric(cleantbl$R7)])
+
+cleantbl$AvgOpp <- rowMeans(cleantbl[,21:27],na.rm=TRUE)
+
+cleantbl[1,]
+```
+
+Finally, we have all required information available in a clean format and can summarize it in the final output table.
+
+```{r Output_table, include=TRUE, warning = FALSE}
+
+finaltbl <- data.frame(matrix(nrow = dim(cleantbl)[1], ncol = 5))
+names(finaltbl) <- c("Name","State","TotalPoints","PreRating", "AvgOppRank")
+
+finaltbl$Name <- cleantbl$Player
+finaltbl$State <- cleantbl$State
+finaltbl$TotalPoints <- cleantbl$TotalPoints
+finaltbl$PreRating <- cleantbl$RatingStart
+finaltbl$AvgOppRank <- cleantbl$AvgOpp
+
+head(finaltbl)
+
+```
+Here we could see the csv file.
+
+```{r}
+csv_df = read_csv('https://raw.githubusercontent.com/KanizSanzida/DATA607/main/tournamentinfo.txt')
+csv_df
+
+```
+
+
+
