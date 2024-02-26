@@ -1,14 +1,11 @@
 ---
-title: "Assignment 5 Data 607"
-author: "Sanzida Kaniz"
-output: pdf_document
+title: "week 5"
+output: html_document
 date: "2024-02-26"
 ---
 
-```{r}
-library(DT)
-library(tidyverse)
-library(dplyr)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
@@ -25,9 +22,8 @@ df2 <- df |>
   fill(Airline) |>
   pivot_longer(cols=3:7,names_to= "City",values_to = "Count")
 glimpse(df2)
-
-
 ```
+
 ```{r}
 df2 |>
   group_by(Airline, `Delay Status`) |>
@@ -44,4 +40,3 @@ ggplot(df2, aes(x=Airline,y=Count,fill = `Delay Status`)) +
   theme(legend.position = c(.85,.25), plot.title = element_text(hjust = 0.5))
 ```
 
-As a conclusion, Utilizing our faceted bar plot, we can now assess the preferable airline choice for each city.  it appears that, in every city, the proportion of delayed flights is consistently lower for Alaskan Airlines compared to AM West. This stark deviation from the overall trend of delays in each city suggests that the logical next step in this data analysis would be to gather more data. The current disparity in cases between Alaskan Airlines and AM West is generating mixed signals, a situation likely to be rectified with a more extensive dataset.
