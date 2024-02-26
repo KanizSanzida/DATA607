@@ -1,0 +1,47 @@
+---
+title: "Assignment 5 Data 607"
+author: "Sanzida Kaniz"
+output: pdf_document
+date: "2024-02-26"
+---
+
+```{r}
+library(DT)
+library(tidyverse)
+library(dplyr)
+```
+
+```{r}
+url = r"(https://raw.githubusercontent.com/KanizSanzida/DATA607/main/Flightdata.csv)"
+suppressMessages(
+df <- read_csv(url, skip_empty_rows = TRUE, show_col_types = FALSE)[-3,] # Skip_empty_rows does not work here and I'm not sure why, as we can see the third row is empty and gets converted to NAs as if skip_empty_rows = FALSE
+)
+names(df)[1:2] <- c("Airline", "Delay Status")
+df
+```
+
+```{r}
+df2 <- df |>
+  fill(Airline) |>
+  pivot_longer(cols=3:7,names_to= "City",values_to = "Count")
+glimpse(df2)
+
+
+```
+```{r}
+df2 |>
+  group_by(Airline, `Delay Status`) |>
+  summarize("Flights" = sum(Count), .groups= "drop_last") |>
+  mutate("Proportion of Flights" = Flights/sum(Flights)) |>
+  knitr::kable()
+```
+
+```{r}
+ggplot(df2, aes(x=Airline,y=Count,fill = `Delay Status`)) +
+  geom_bar(stat="identity", position = position_fill(reverse= TRUE)) +
+  facet_wrap(~City) +
+  labs(title = "Flight Delays Per City", y = "Proportion of Flights") +
+  theme(legend.position = c(.85,.25), plot.title = element_text(hjust = 0.5))
+```
+
+As a conclusion, Utilizing our faceted bar plot, we can now assess the preferable airline choice for each city.  it appears that, in every city, the proportion of delayed flights is consistently lower for Alaskan Airlines compared to AM West. This stark deviation from the overall trend of delays in each city suggests that the logical next step in this data analysis would be to gather more data. The current disparity in cases between Alaskan Airlines and AM West is generating mixed signals, a situation likely to be rectified with a more extensive dataset.
